@@ -1,0 +1,262 @@
+//@version=4
+study(title="POINTS PIVOTS", shorttitle="POINTS PIVOTS", overlay = true, max_bars_back=5000)
+
+///////////////
+// FUNCTIONS //
+///////////////
+
+// Function outputs 1 when it's the first bar of the D/W/M/Y
+is_newbar(res) =>
+    ch = 0
+    if(res == 'Y')
+        t  = year(time('D'))
+        ch := change(t) != 0 ? 1 : 0
+    else
+        t = time(res)
+        ch := change(t) != 0 ? 1 : 0
+    ch
+
+// Rounding levels to min tick
+nround(x) => 
+    n = round(x / syminfo.mintick) * syminfo.mintick
+
+////////////
+// INPUTS //
+////////////
+
+pp_type                = "Traditional"
+show_level_value       = input(title = "Show Levels Value?",       defval = true,   type = input.bool)
+disp_Daily  = input(title = "Show Daily ?",   defval = true,    type=input.bool)
+disp_Weekly = input(title = "Show Weekly ?",    defval = true,  type = input.bool)
+disp_Monthly = input(title = "Show Monthly ?",    defval = true,  type = input.bool)
+
+//pp_res = pp_period == 'Day' ? 'D' : pp_period == 'Week' ? 'W' : pp_period == 'Month' ? 'M' : 'Y' 
+pp_res = 'D'    // input(title = "UT", defval = 'D', options = ['D', 'W', 'M'])
+pp_res2 ='W'
+pp_res3 ='M'
+
+/////////////////////
+// Get HLC from HT //
+
+// DAILY
+// Calc Open
+open_cur = security(syminfo.tickerid, pp_res, open)
+popen = security(syminfo.tickerid, pp_res, open[1])
+
+// Calc High
+high_cur = security(syminfo.tickerid, pp_res, high)
+phigh = security(syminfo.tickerid, pp_res, high[1])
+
+// Calc Low
+low_cur = security(syminfo.tickerid, pp_res, low)
+plow = security(syminfo.tickerid, pp_res, low[1])
+
+// Calc Close
+pclose = security(syminfo.tickerid, pp_res, close[1])
+
+// WEEKLY
+// Calc Open
+open_cur2 = security(syminfo.tickerid, pp_res2, open)
+popen2 = security(syminfo.tickerid, pp_res2, open[1])
+
+// Calc High
+high_cur2 = security(syminfo.tickerid, pp_res2, high)
+phigh2 = security(syminfo.tickerid, pp_res2, high[1])
+
+// Calc Low
+low_cur2 = security(syminfo.tickerid, pp_res2, low)
+plow2 = security(syminfo.tickerid, pp_res2, low[1])
+
+// Calc Close
+pclose2 = security(syminfo.tickerid, pp_res2, close[1])
+
+// MONTHLY
+// Calc Open
+open_cur3 = security(syminfo.tickerid, pp_res3, open)
+popen3 = security(syminfo.tickerid, pp_res3, open[1])
+
+// Calc High
+high_cur3 = security(syminfo.tickerid, pp_res3, high)
+phigh3 = security(syminfo.tickerid, pp_res3, high[1])
+
+// Calc Low
+low_cur3 = security(syminfo.tickerid, pp_res3, low)
+plow3 = security(syminfo.tickerid, pp_res3, low[1])
+
+// Calc Close
+pclose3 = security(syminfo.tickerid, pp_res3, close[1])
+
+
+////////////////////////////
+// CALCULATE PIVOT POINTS //
+////////////////////////////
+
+// // Daily
+PP = 0.0
+R1 = 0.0, R2 = 0.0, R3 = 0.0
+S1 = 0.0, S2 = 0.0, S3 = 0.0
+
+if (disp_Daily == true)
+    PP := (phigh + plow + pclose) / 3
+    R1 := PP     + (PP   - plow)
+    S1 := PP     - (phigh - PP)
+    R2 := PP     + (phigh - plow)
+    S2 := PP     - (phigh - plow)
+    R3 := phigh  + 2 * (PP   - plow) 
+    S3 := plow   - 2 * (phigh - PP) 
+    
+// Weekly
+PP2 = 0.0
+R12 = 0.0, R22 = 0.0, R32 = 0.0
+S12 = 0.0, S22 = 0.0, S32 = 0.0
+
+if (disp_Weekly == true)
+    PP2 := (phigh2 + plow2 + pclose2) / 3
+    R12 := PP2     + (PP2   - plow2)
+    S12 := PP2     - (phigh2 - PP2)
+    R22 := PP2     + (phigh2 - plow2)
+    S22 := PP2     - (phigh2 - plow2)
+    R32 := phigh2  + 2 * (PP2   - plow2) 
+    S32 := plow2   - 2 * (phigh2 - PP2) 
+    
+// Monthly
+PP3 = 0.0
+R13 = 0.0, R23 = 0.0, R33 = 0.0
+S13 = 0.0, S23 = 0.0, S33 = 0.0
+
+if (disp_Monthly == true)
+    PP3 := (phigh3 + plow3 + pclose3) / 3
+    R13 := PP3     + (PP3   - plow3)
+    S13 := PP3     - (phigh3 - PP3)
+    R23 := PP3     + (phigh3 - plow3)
+    S23 := PP3     - (phigh3 - plow3)
+    R33 := phigh3  + 2 * (PP3   - plow3) 
+    S33 := plow3   - 2 * (phigh3 - PP3)
+
+ 
+//////////////
+// PLOTTING //
+// // Daily
+bars_sinse = 0
+bars_sinse := is_newbar(pp_res) ? 0 : bars_sinse[1] + 1
+
+// Weekly
+bars_sinse2 = 0
+bars_sinse2 := is_newbar(pp_res2) ? 0 : bars_sinse2[1] + 1
+
+// Monthly
+bars_sinse3 = 0
+bars_sinse3 := is_newbar(pp_res3) ? 0 : bars_sinse3[1] + 1
+
+////////////////////////
+// PLOT PIVOTS LEVELS //
+
+// Daily
+vpp_p = line.new(bar_index[min(bars_sinse, 300)], PP, bar_index, PP, color=color.purple,  style =  line.style_dashed, extend = extend.none, width = 2)
+vs1_p = line.new(bar_index[min(bars_sinse, 300)], S1, bar_index, S1, color=color.green,   style =  line.style_dashed, extend = extend.none, width = 1)
+vs2_p = line.new(bar_index[min(bars_sinse, 300)], S2, bar_index, S2, color=color.green,   style =  line.style_dashed, extend = extend.none, width = 2)
+vs3_p = line.new(bar_index[min(bars_sinse, 300)], S3, bar_index, S3, color=color.green,   style =  line.style_solid, extend = extend.none, width = 3)
+vr1_p = line.new(bar_index[min(bars_sinse, 300)], R1, bar_index, R1, color=color.red, style =  line.style_dashed, extend = extend.none, width = 1)
+vr2_p = line.new(bar_index[min(bars_sinse, 300)], R2, bar_index, R2, color=color.red, style =  line.style_dashed, extend = extend.none, width = 2)
+vr3_p = line.new(bar_index[min(bars_sinse, 300)], R3, bar_index, R3, color=color.red,   style =  line.style_solid, extend = extend.none, width = 3)
+
+// delete previous lines in the same period
+line.delete(vpp_p[1])           
+line.delete(vs1_p[1]) 
+line.delete(vs2_p[1])  
+line.delete(vs3_p[1])  
+line.delete(vr1_p[1]) 
+line.delete(vr2_p[1])  
+line.delete(vr3_p[1]) 
+
+// Add labels
+label_vpp = label.new(bar_index, PP, text=show_level_value ? ("Piv D"  + " (" + tostring(nround(PP))) + ")" : "Piv D",  style= label.style_none, textcolor= color.white)
+label_vs1 = label.new(bar_index, S1, text=show_level_value ? ("S1 D" + " (" + tostring(nround(S1))) + ")" : "S1 D", style= label.style_none, textcolor= color.white)
+label_vs2 = label.new(bar_index, S2, text=show_level_value ? ("S2 D" + " (" + tostring(nround(S2))) + ")" : "S2 D", style= label.style_none, textcolor= color.white)
+label_vs3 = label.new(bar_index, S3, text=show_level_value ? ("S3 D" + " (" + tostring(nround(S3))) + ")" : "S3 D", style= label.style_none, textcolor= color.white)
+label_vr1 = label.new(bar_index, R1, text=show_level_value ? ("R1 D" + " (" + tostring(nround(R1))) + ")" : "R1 D", style= label.style_none, textcolor= color.white)
+label_vr2 = label.new(bar_index, R2, text=show_level_value ? ("R2 D" + " (" + tostring(nround(R2))) + ")" : "R2 D", style= label.style_none, textcolor= color.white)
+label_vr3 = label.new(bar_index, R3, text=show_level_value ? ("R3 D" + " (" + tostring(nround(R3))) + ")" : "R3 D", style= label.style_none, textcolor= color.white)
+
+label.delete(label_vpp[1])
+label.delete(label_vs1[1])
+label.delete(label_vs2[1])
+label.delete(label_vs3[1])
+label.delete(label_vr1[1])
+label.delete(label_vr2[1])
+label.delete(label_vr3[1])    
+
+
+
+// Weekly
+vpp_p2 = line.new(bar_index[min(bars_sinse2, 300)], PP2, bar_index, PP2, color=color.purple,  style =  line.style_dashed, extend = extend.none, width = 3)
+vs1_p2 = line.new(bar_index[min(bars_sinse2, 300)], S12, bar_index, S12, color=color.green,   style =  line.style_dashed, extend = extend.none, width = 2)
+vs2_p2 = line.new(bar_index[min(bars_sinse2, 300)], S22, bar_index, S22, color=color.green,   style =  line.style_dashed, extend = extend.none, width = 3)
+vs3_p2 = line.new(bar_index[min(bars_sinse2, 300)], S32, bar_index, S32, color=color.green,   style =  line.style_solid, extend = extend.none, width = 4)
+vr1_p2 = line.new(bar_index[min(bars_sinse2, 300)], R12, bar_index, R12, color=color.red, style =  line.style_dashed, extend = extend.none, width = 2)
+vr2_p2 = line.new(bar_index[min(bars_sinse2, 300)], R22, bar_index, R22, color=color.red, style =  line.style_dashed, extend = extend.none, width = 3)
+vr3_p2 = line.new(bar_index[min(bars_sinse2, 300)], R32, bar_index, R32, color=color.red,   style =  line.style_solid, extend = extend.none, width = 4)
+
+// delete previous lines in the same period
+line.delete(vpp_p2[1])           
+line.delete(vs1_p2[1]) 
+line.delete(vs2_p2[1])  
+line.delete(vs3_p2[1])  
+line.delete(vr1_p2[1]) 
+line.delete(vr2_p2[1])  
+line.delete(vr3_p2[1]) 
+
+// Add labels
+label_vpp2 = label.new(bar_index, PP2, text=show_level_value ? ("Piv W"  + " (" + tostring(nround(PP2))) + ")" : "Piv W",  style= label.style_none, textcolor= color.white)
+label_vs12 = label.new(bar_index, S12, text=show_level_value ? ("S1 W" + " (" + tostring(nround(S12))) + ")" : "S1 W", style= label.style_none, textcolor= color.white)
+label_vs22 = label.new(bar_index, S22, text=show_level_value ? ("S2 W" + " (" + tostring(nround(S22))) + ")" : "S2 W", style= label.style_none, textcolor= color.white)
+label_vs32 = label.new(bar_index, S32, text=show_level_value ? ("S3 W" + " (" + tostring(nround(S32))) + ")" : "S3 W", style= label.style_none, textcolor= color.white)
+label_vr12 = label.new(bar_index, R12, text=show_level_value ? ("R1 W" + " (" + tostring(nround(R12))) + ")" : "R1 W", style= label.style_none, textcolor= color.white)
+label_vr22 = label.new(bar_index, R22, text=show_level_value ? ("R2 W" + " (" + tostring(nround(R22))) + ")" : "R2 W", style= label.style_none, textcolor= color.white)
+label_vr32 = label.new(bar_index, R32, text=show_level_value ? ("R3 W" + " (" + tostring(nround(R32))) + ")" : "R3 W", style= label.style_none, textcolor= color.white)
+
+label.delete(label_vpp2[1])
+label.delete(label_vs12[1])
+label.delete(label_vs22[1])
+label.delete(label_vs32[1])
+label.delete(label_vr12[1])
+label.delete(label_vr22[1])
+label.delete(label_vr32[1])    
+
+
+
+// Monthly
+vpp_p3 = line.new(bar_index[min(bars_sinse3, 300)], PP3, bar_index, PP3, color=color.purple,  style =  line.style_dashed, extend = extend.none, width = 4)
+vs1_p3 = line.new(bar_index[min(bars_sinse3, 300)], S13, bar_index, S13, color=color.green,   style =  line.style_dashed, extend = extend.none, width = 3)
+vs2_p3 = line.new(bar_index[min(bars_sinse3, 300)], S23, bar_index, S23, color=color.green,   style =  line.style_dashed, extend = extend.none, width = 4)
+vs3_p3 = line.new(bar_index[min(bars_sinse3, 300)], S33, bar_index, S33, color=color.green,   style =  line.style_solid, extend = extend.none, width = 5)
+vr1_p3 = line.new(bar_index[min(bars_sinse3, 300)], R13, bar_index, R13, color=color.red, style =  line.style_dashed, extend = extend.none, width = 3)
+vr2_p3 = line.new(bar_index[min(bars_sinse3, 300)], R23, bar_index, R23, color=color.red, style =  line.style_dashed, extend = extend.none, width = 4)
+vr3_p3 = line.new(bar_index[min(bars_sinse3, 300)], R33, bar_index, R33, color=color.red,   style =  line.style_solid, extend = extend.none, width = 5)
+
+// delete previous lines in the same period
+line.delete(vpp_p3[1])           
+line.delete(vs1_p3[1]) 
+line.delete(vs2_p3[1])  
+line.delete(vs3_p3[1])  
+line.delete(vr1_p3[1]) 
+line.delete(vr2_p3[1])  
+line.delete(vr3_p3[1]) 
+
+// Add labels
+label_vpp3 = label.new(bar_index, PP3, text=show_level_value ? ("Piv M"  + " (" + tostring(nround(PP3))) + ")" : "Piv M",  style= label.style_none, textcolor= color.white)
+label_vs13 = label.new(bar_index, S13, text=show_level_value ? ("S1 M" + " (" + tostring(nround(S13))) + ")" : "S1 M", style= label.style_none, textcolor= color.white)
+label_vs23 = label.new(bar_index, S23, text=show_level_value ? ("S2 M" + " (" + tostring(nround(S23))) + ")" : "S2 M", style= label.style_none, textcolor= color.white)
+label_vs33 = label.new(bar_index, S33, text=show_level_value ? ("S3 M" + " (" + tostring(nround(S33))) + ")" : "S3 M", style= label.style_none, textcolor= color.white)
+label_vr13 = label.new(bar_index, R13, text=show_level_value ? ("R1 M" + " (" + tostring(nround(R13))) + ")" : "R1 M", style= label.style_none, textcolor= color.white)
+label_vr23 = label.new(bar_index, R23, text=show_level_value ? ("R2 M" + " (" + tostring(nround(R23))) + ")" : "R2 M", style= label.style_none, textcolor= color.white)
+label_vr33 = label.new(bar_index, R33, text=show_level_value ? ("R3 M" + " (" + tostring(nround(R33))) + ")" : "R3 M", style= label.style_none, textcolor= color.white)
+
+label.delete(label_vpp3[1])
+label.delete(label_vs13[1])
+label.delete(label_vs23[1])
+label.delete(label_vs33[1])
+label.delete(label_vr13[1])
+label.delete(label_vr23[1])
+label.delete(label_vr33[1]) 
+
